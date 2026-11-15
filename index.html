@@ -88,8 +88,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const MP_VERSION='0.10.22';
-const MP_ROOT=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
-const MP_MODEL='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
+const MP_CDNS=[`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`,`https://unpkg.com/@mediapipe/tasks-vision@${MP_VERSION}`];
+const MP_MODELS=['https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task','https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/hand_landmarker.task'];
+const modelErrors=[];
 const edges=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[13,17],[17,18],[18,19],[19,20],[0,17]];
 const state={view:'home',model:null,modelPromise:null,stream:null,side:'user',running:false,starting:false,swapBusy:false,token:0,frame:0,lastProcess:0,lastVideoTime:-1,candidate:null,candidateAt:0,active:null,handLastAt:0};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -148,27 +149,42 @@ function formatError(e,stage='camera'){
  if(name==='NotFoundError'||name==='DevicesNotFoundError')return{title:'사용할 카메라가 없어요',message:'카메라가 연결되어 있는지 확인해 주세요. 휴대폰에서는 카메라 접근 권한을 확인해 주세요.'};
  if(name==='NotReadableError'||name==='TrackStartError')return{title:'카메라를 열 수 없어요',message:'다른 앱이 카메라를 사용 중일 수 있습니다. 카메라 앱을 종료하고 다시 시도해 주세요.'};
  if(name==='OverconstrainedError')return{title:'선택한 카메라를 사용할 수 없어요',message:'다른 카메라로 전환하거나 다시 시작해 주세요.'};
- if(stage==='model')return{title:'손 인식 모델을 불러오지 못했어요',message:'인터넷 연결을 확인해 주세요. 학교 네트워크에서 AI 모델 서버가 차단되어 있을 수 있습니다. 다른 네트워크로 다시 시도해 주세요. ('+name+')'};
+ if(stage==='model')return{title:'손 인식 모델을 불러오지 못했어요',message:'AI 실행 파일을 불러오는 중 오류가 발생했습니다. '+String(e?.message||name).slice(0,240)+' 다른 브라우저 또는 네트워크에서도 확인해 주세요.'};
  return{title:'카메라를 시작하지 못했어요',message:'브라우저에서 카메라 접근을 허용한 뒤 다시 시도해 주세요. ('+name+')'};
 }
 async function getModel(){if(state.model)return state.model;if(state.modelPromise)return state.modelPromise;
- state.modelPromise=(async()=>{
-  // Some CDN builds expose classes as named exports, others under default.
-  let mp;
-  try{
-   const pkg=await import(`${MP_ROOT}`);
-   mp=pkg.FilesetResolver&&pkg.GestureRecognizer?pkg:pkg.default;
-  }catch(firstError){
-   const pkg=await import(`${MP_ROOT}/vision_bundle.mjs`);
-   mp=pkg.FilesetResolver&&pkg.GestureRecognizer?pkg:pkg.default;
-  }
-  if(!mp?.FilesetResolver||!mp?.GestureRecognizer)throw new Error('MediaPipe 인식 모듈을 찾지 못했습니다.');
-  const files=await mp.FilesetResolver.forVisionTasks(`${MP_ROOT}/wasm`);
-  const opt={baseOptions:{modelAssetPath:MP_MODEL,delegate:'GPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55};
-  try{return await mp.GestureRecognizer.createFromOptions(files,opt);}catch(gpuError){
-   return await mp.GestureRecognizer.createFromOptions(files,{...opt,baseOptions:{...opt.baseOptions,delegate:'CPU'}});
-  }
- })();try{state.model=await state.modelPromise;return state.model;}finally{state.modelPromise=null;}}
+  state.modelPromise=(async()=>{
+    modelErrors.length=0;
+    // Only hand landmarks are needed for the limited Korean jamo classifier.
+    // Use the officially documented ESM entry point, not a bare CDN package root.
+    for(const root of MP_CDNS){
+      let mp,files;
+      try{
+        const pkg=await import(`${root}/vision_bundle.mjs`);
+        mp=pkg.HandLandmarker&&pkg.FilesetResolver?pkg:pkg.default;
+        if(!mp?.HandLandmarker||!mp?.FilesetResolver)throw new Error('손 관절 추적 모듈을 찾지 못했습니다.');
+        files=await mp.FilesetResolver.forVisionTasks(`${root}/wasm`);
+      }catch(error){
+        modelErrors.push('라이브러리 '+new URL(root).hostname+': '+String(error?.message||error).slice(0,110));
+        continue;
+      }
+      for(const url of MP_MODELS){
+        try{
+          // CPU is the most compatible delegate for school computers and mobile devices.
+          return await mp.HandLandmarker.createFromOptions(files,{
+            baseOptions:{modelAssetPath:url,delegate:'CPU'},runningMode:'VIDEO',numHands:1,
+            minHandDetectionConfidence:.55,minHandPresenceConfidence:.55,minTrackingConfidence:.55
+          });
+        }catch(error){
+          modelErrors.push('모델 '+new URL(url).hostname+': '+String(error?.message||error).slice(0,110));
+        }
+      }
+    }
+    throw new Error(modelErrors.join(' / ').slice(0,230)||'AI 파일을 불러올 수 없습니다.');
+  })();
+  try{state.model=await state.modelPromise;return state.model;}
+  finally{state.modelPromise=null;}
+}
 function stopVideo(){state.running=false;cancelAnimationFrame(state.frame);state.frame=0;state.lastVideoTime=-1;if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null;}
  const vid=$('video');try{vid.pause();vid.srcObject=null;}catch(_){}const c=$('landmarks');c.getContext('2d').clearRect(0,0,c.width,c.height);$('liveDot').classList.remove('is-on');}
 async function begin(side=state.side){
@@ -211,7 +227,7 @@ function draw(lm){const c=$('landmarks'),vid=$('video');if(c.width!==vid.videoWi
 }
 function loop(now){if(!state.running)return;state.frame=requestAnimationFrame(loop);if(document.hidden)return;const vid=$('video');if(vid.readyState<2||now-state.lastProcess<95||vid.currentTime===state.lastVideoTime)return;
  state.lastProcess=now;state.lastVideoTime=vid.currentTime;
- try{const res=state.model.recognizeForVideo(vid,now);const lm=res.landmarks?.[0]||null;draw(lm);
+ try{const res=state.model.detectForVideo(vid,now);const lm=res.landmarks?.[0]||null;draw(lm);
   if(!lm){if(now-state.handLastAt>240)resetRecognition('손을 보여주세요','화면 안에 손 전체가 보이도록 해주세요.');return;}
   state.handLastAt=now;const letter=classifyJamo(lm);
   if(!letter){state.candidate=null;state.active=null;$('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent='손모양을 확인하는 중';$('standbySub').textContent='ㄱ · ㄴ · ㄷ 중 하나를 보여 주세요.';$('resultNote').textContent='';document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));return;}
