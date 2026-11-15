@@ -132,37 +132,76 @@ function showLetter(letter){if(state.active===letter)return;state.active=letter;
  document.querySelectorAll('[data-letter]').forEach(e=>e.classList.toggle('active',e.dataset.letter===letter));
 }
 function showLoading(msg='카메라를 준비하고 있어요',sub='처음에는 손 인식 모델을 불러옵니다.'){$('placeholder').hidden=false;$('loadingView').hidden=false;$('errorView').hidden=true;$('loadingView').querySelector('strong').textContent=msg;$('loadingView').querySelector('p').textContent=sub;}
-function showError(error){$('placeholder').hidden=false;$('loadingView').hidden=true;$('errorView').hidden=false;$('errorText').textContent=error;$('cameraState').textContent='연결 실패';$('liveDot').classList.remove('is-on');resetRecognition('인식할 수 없습니다','카메라를 확인한 후 다시 시도해 주세요.');}
-function formatError(e){if(/HTTPS|localhost/i.test(e?.message||''))return '카메라 기능은 HTTPS 사이트에서 사용할 수 있습니다. GitHub Pages로 접속해 주세요.';
- if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')return '카메라 사용이 차단되었습니다. 브라우저의 사이트 권한에서 허용해 주세요.';
- if(e?.name==='NotFoundError'||e?.name==='DevicesNotFoundError')return '연결된 카메라가 없습니다. 다른 카메라를 연결하거나 권한을 확인해 주세요.';
- if(e?.name==='NotReadableError'||e?.name==='TrackStartError')return '카메라를 다른 앱에서 사용하고 있을 수 있습니다. 다른 앱을 종료해 주세요.';
- if(e?.name==='OverconstrainedError')return '선택한 카메라를 사용할 수 없습니다. 카메라를 전환하거나 다시 시도해 주세요.';
- if(/fetch|network|wasm|download|load|import|connection|timeout|mime|CORS/i.test(e?.message||''))return '손 인식 모델을 불러오지 못했습니다. 인터넷 연결과 학교 네트워크를 확인해 주세요.';
- return '카메라 또는 손 인식 모델을 시작하지 못했습니다. 다시 시도해 주세요.';}
+function showError(details){
+ const info=typeof details==='string'?{title:'카메라 연결을 확인해 주세요',message:details}:details;
+ $('placeholder').hidden=false;$('loadingView').hidden=true;$('errorView').hidden=false;
+ $('errorView').querySelector('strong').textContent=info.title;
+ $('errorText').textContent=info.message;
+ $('cameraState').textContent='연결 실패';$('liveDot').classList.remove('is-on');
+ resetRecognition('인식할 수 없습니다','오류 안내를 확인한 뒤 다시 시도해 주세요.');
+}
+function formatError(e,stage='camera'){
+ const name=e?.name||'Error';const message=String(e?.message||'');
+ if(name==='InsecureContextError')return{title:'안전한 연결이 필요해요',message:'카메라는 보안 연결에서만 사용할 수 있습니다. https://kmc080406.github.io/susu/ 주소를 브라우저에서 직접 열어 주세요.'};
+ if(name==='CameraUnavailableError')return{title:'이 환경에서는 카메라를 열 수 없어요',message:'앱 내부 미리보기나 일부 브라우저에서는 카메라 기능이 제한됩니다. Chrome 또는 Safari에서 이 웹사이트를 직접 열어 주세요.'};
+ if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError')return{title:'카메라 접근이 차단됐어요',message:'주소창 옆 사이트 권한에서 카메라를 허용한 뒤 다시 시도해 주세요. 다른 앱에서 사이트를 열었다면 Chrome 또는 Safari에서 직접 열어 주세요.'};
+ if(name==='NotFoundError'||name==='DevicesNotFoundError')return{title:'사용할 카메라가 없어요',message:'카메라가 연결되어 있는지 확인해 주세요. 휴대폰에서는 카메라 접근 권한을 확인해 주세요.'};
+ if(name==='NotReadableError'||name==='TrackStartError')return{title:'카메라를 열 수 없어요',message:'다른 앱이 카메라를 사용 중일 수 있습니다. 카메라 앱을 종료하고 다시 시도해 주세요.'};
+ if(name==='OverconstrainedError')return{title:'선택한 카메라를 사용할 수 없어요',message:'다른 카메라로 전환하거나 다시 시작해 주세요.'};
+ if(stage==='model')return{title:'손 인식 모델을 불러오지 못했어요',message:'인터넷 연결을 확인해 주세요. 학교 네트워크에서 AI 모델 서버가 차단되어 있을 수 있습니다. 다른 네트워크로 다시 시도해 주세요. ('+name+')'};
+ return{title:'카메라를 시작하지 못했어요',message:'브라우저에서 카메라 접근을 허용한 뒤 다시 시도해 주세요. ('+name+')'};
+}
 async function getModel(){if(state.model)return state.model;if(state.modelPromise)return state.modelPromise;
- state.modelPromise=(async()=>{const mp=await import(`${MP_ROOT}/vision_bundle.mjs`);const files=await mp.FilesetResolver.forVisionTasks(`${MP_ROOT}/wasm`);const opt={baseOptions:{modelAssetPath:MP_MODEL,delegate:'GPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55};
-  try{return await mp.GestureRecognizer.createFromOptions(files,opt);}catch(e){return await mp.GestureRecognizer.createFromOptions(files,{...opt,baseOptions:{...opt.baseOptions,delegate:'CPU'}});}
+ state.modelPromise=(async()=>{
+  // Some CDN builds expose classes as named exports, others under default.
+  let mp;
+  try{
+   const pkg=await import(`${MP_ROOT}`);
+   mp=pkg.FilesetResolver&&pkg.GestureRecognizer?pkg:pkg.default;
+  }catch(firstError){
+   const pkg=await import(`${MP_ROOT}/vision_bundle.mjs`);
+   mp=pkg.FilesetResolver&&pkg.GestureRecognizer?pkg:pkg.default;
+  }
+  if(!mp?.FilesetResolver||!mp?.GestureRecognizer)throw new Error('MediaPipe 인식 모듈을 찾지 못했습니다.');
+  const files=await mp.FilesetResolver.forVisionTasks(`${MP_ROOT}/wasm`);
+  const opt={baseOptions:{modelAssetPath:MP_MODEL,delegate:'GPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55};
+  try{return await mp.GestureRecognizer.createFromOptions(files,opt);}catch(gpuError){
+   return await mp.GestureRecognizer.createFromOptions(files,{...opt,baseOptions:{...opt.baseOptions,delegate:'CPU'}});
+  }
  })();try{state.model=await state.modelPromise;return state.model;}finally{state.modelPromise=null;}}
 function stopVideo(){state.running=false;cancelAnimationFrame(state.frame);state.frame=0;state.lastVideoTime=-1;if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null;}
  const vid=$('video');try{vid.pause();vid.srcObject=null;}catch(_){}const c=$('landmarks');c.getContext('2d').clearRect(0,0,c.width,c.height);$('liveDot').classList.remove('is-on');}
 async function begin(side=state.side){
- if(state.starting)return;const token=++state.token;state.starting=true;stopVideo();state.side=side;showLoading();resetRecognition('손을 보여주세요','카메라를 준비하고 있어요.');$('cameraState').textContent='준비 중';$('cameraSide').textContent=side==='user'?'전면 카메라':'후면 카메라';$('flipBtn').disabled=true;$('retryBtn').disabled=true;
+ if(state.starting)return;
+ const token=++state.token;state.starting=true;stopVideo();state.side=side;
+ showLoading('카메라를 연결하고 있어요','카메라 접근 권한을 허용해 주세요.');
+ resetRecognition('손을 보여주세요','카메라를 준비하고 있어요.');
+ $('cameraState').textContent='준비 중';$('cameraSide').textContent=side==='user'?'전면 카메라':'후면 카메라';
+ $('flipBtn').disabled=true;$('retryBtn').disabled=true;
+ let stage='camera';
  try{
-  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia)throw new Error('HTTPS 또는 localhost에서 카메라를 사용할 수 있습니다.');
-  const model=await getModel();if(token!==state.token)return;
-  showLoading('카메라를 연결하고 있어요','브라우저에서 카메라 접근을 허용해 주세요.');
-  // Prefer requested facing mode, but fall back when a desktop has only one camera.
-  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:side},width:{ideal:960},height:{ideal:720}}});}
+  if(!window.isSecureContext){const e=new Error('Secure context required');e.name='InsecureContextError';throw e;}
+  if(!navigator.mediaDevices?.getUserMedia){const e=new Error('getUserMedia is unavailable');e.name='CameraUnavailableError';throw e;}
+  // Ask for camera permission before loading AI libraries, so permissions and model failures are distinguishable.
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:side},width:{ideal:960},height:{ideal:720}}});}
   catch(e){if(e.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({audio:false,video:true});else throw e;}
   if(token!==state.token){stream.getTracks().forEach(t=>t.stop());return;}
-  state.stream=stream;const actualSide=stream.getVideoTracks()[0]?.getSettings?.().facingMode;
+  state.stream=stream;
+  const actualSide=stream.getVideoTracks()[0]?.getSettings?.().facingMode;
   $('cameraSide').textContent=actualSide==='environment'?'후면 카메라':actualSide==='user'?'전면 카메라':'카메라';
   const video=$('video');video.srcObject=stream;await video.play();if(token!==state.token)return;
-  state.running=true;state.lastProcess=0;state.lastVideoTime=-1;$('placeholder').hidden=true;$('liveDot').classList.add('is-on');$('cameraState').textContent='인식 중';
-  stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{if(token!==state.token||!state.running)return;stopVideo();showError('카메라 연결이 끊어졌습니다. 다시 시도해 주세요.');}));
+  stage='model';
+  showLoading('손 인식 AI를 불러오고 있어요','첫 실행 시 모델 다운로드가 필요합니다.');
+  await getModel();if(token!==state.token)return;
+  state.running=true;state.lastProcess=0;state.lastVideoTime=-1;
+  $('placeholder').hidden=true;$('liveDot').classList.add('is-on');$('cameraState').textContent='인식 중';
+  stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{
+   if(token!==state.token||!state.running)return;
+   stopVideo();showError('카메라 연결이 끊어졌습니다. 다시 시도해 주세요.');
+  }));
   state.frame=requestAnimationFrame(loop);
- }catch(e){if(token===state.token){stopVideo();showError(formatError(e));}}
+ }catch(e){if(token===state.token){console.error('[손짓] 시작 오류',stage,e);stopVideo();showError(formatError(e,stage));}}
  finally{if(token===state.token){state.starting=false;$('flipBtn').disabled=false;$('retryBtn').disabled=false;}}
 }
 function draw(lm){const c=$('landmarks'),vid=$('video');if(c.width!==vid.videoWidth)c.width=vid.videoWidth;if(c.height!==vid.videoHeight)c.height=vid.videoHeight;
