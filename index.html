@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f2">
+<meta name="description" content="손으로 ㄱ, ㄴ, ㄷ을 만들면 카메라가 인식하는 CODEMATE 지문자 체험 웹">
+<title>손짓. | ㄱ · ㄴ · ㄷ 지문자 인식</title>
+<style>
+:root{--bg:#f7f7f2;--ink:#173c32;--dark:#172920;--muted:#708178;--line:#e1e6dc;--yellow:#f6db67;--mint:#e6f0e5;--radius:26px;--font:'Pretendard Variable','Pretendard','NanumSquare','Noto Sans CJK KR','Apple SD Gothic Neo',system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg)}body{font-family:var(--font);color:var(--ink);letter-spacing:-.038em;-webkit-font-smoothing:antialiased}button{font:inherit;cursor:pointer}button:disabled{cursor:wait;opacity:.6}button:focus-visible,a:focus-visible{outline:3px solid #409c73;outline-offset:4px}button{border:0}button svg{flex:0 0 auto}svg{display:block}h1,h2,p{margin:0}a{color:inherit}html{scroll-behavior:smooth}[hidden]{display:none!important}
+.site{width:min(1240px,calc(100% - 92px));margin:auto}.scanning .header,.scanning .footer{display:none}.header{height:94px;display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{display:inline-flex;align-items:center;gap:11px;text-decoration:none;font-size:20px;font-weight:900;letter-spacing:-.065em}.logo-dot{width:12px;height:12px;background:#f3ce3b;border-radius:4px;transform:rotate(-13deg)}.header-side{font-size:10px;font-weight:850;letter-spacing:.17em;color:#7a8b7f}.screen{display:none}.screen.is-active{display:block}
+.hero{min-height:min(670px,calc(100svh - 145px));display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:clamp(42px,8vw,110px);padding:38px 0 64px}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.21em;color:#849787;display:flex;align-items:center;gap:9px;margin-bottom:24px}.eyebrow:before{content:"";height:7px;width:7px;border-radius:50%;background:#2d8f67}.hero-title{font-weight:900;letter-spacing:-.095em;font-size:clamp(78px,8.6vw,124px);line-height:1.08}.hero-title span{color:#f1c83f}.hero-desc{font-size:clamp(17px,1.7vw,21px);color:#63756a;line-height:1.75;margin:28px 0 34px;font-weight:550}.primary{display:inline-flex;align-items:center;justify-content:space-between;gap:52px;min-width:230px;height:66px;padding:0 25px 0 30px;border-radius:15px;background:var(--ink);color:white;font-size:18px;font-weight:850;letter-spacing:-.025em;box-shadow:0 10px 24px #1d4f3921;transition:transform .18s,background .18s}.primary:hover{transform:translateY(-2px);background:#245742}.primary:active{transform:translateY(1px)}.primary svg{width:22px}.hero-foot{font-size:12px;color:#9aaba0;margin-top:31px;line-height:1.6}
+.hero-visual{position:relative;min-height:500px;display:grid;place-items:center}.orb{width:min(100%,515px);aspect-ratio:1;border-radius:50%;background:#eaf0e7;display:grid;place-items:center;position:relative}.orb:after{content:"";position:absolute;width:32px;height:32px;border-radius:50%;right:4%;top:18%;background:var(--yellow)}.letter-group{position:relative;width:85%;height:68%;display:flex;align-items:center;justify-content:center;gap:13px}.letter-tile{width:30%;max-width:140px;aspect-ratio:.75;display:grid;place-items:center;border:1px solid #e3e7d9;border-radius:24px;background:white;box-shadow:0 14px 28px #294d3410;font-size:clamp(64px,7vw,106px);font-weight:850;letter-spacing:-.08em}.letter-tile:first-child{transform:translateY(23px) rotate(-10deg)}.letter-tile:nth-child(2){z-index:1;background:var(--yellow);transform:translateY(-25px) rotate(2deg);box-shadow:0 24px 35px #c9b34436}.letter-tile:last-child{transform:translateY(19px) rotate(10deg)}.visual-tag{position:absolute;bottom:9%;right:4%;transform:rotate(-4deg);background:#fff;padding:12px 18px;border-radius:11px;box-shadow:0 9px 18px #2340240a;font-size:12px;font-weight:850;color:#63806b}.footer{height:52px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.04em;color:#9cab9e}
+/* Scanner view */
+.scan-screen{padding:13px 0 18px}.scan-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:24px;min-height:48px}.back-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 2px;background:transparent;font-size:13px;font-weight:800;color:#536a5d}.back-btn:hover{color:var(--ink)}.scan-title{font-size:15px;font-weight:900;letter-spacing:-.055em}.scan-tools{display:flex;gap:8px;align-items:center}.tool-btn{height:43px;border:1px solid #d9e3d7;background:white;border-radius:12px;display:flex;gap:8px;align-items:center;justify-content:center;padding:0 14px;color:var(--ink);font-weight:800;font-size:12px}.tool-btn:hover{background:#eef3eb}.tool-btn svg{width:18px;height:18px;stroke-width:2}.tool-btn.icononly{width:43px;padding:0}.scanner-layout{display:grid;grid-template-columns:minmax(0,1.33fr) minmax(315px,.67fr);gap:24px;align-items:stretch}.camera-card{position:relative;background:#1a3027;border-radius:25px;min-height:500px;overflow:hidden;isolation:isolate}.camera-card video{position:absolute;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:0}.camera-card canvas{position:absolute;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);pointer-events:none;z-index:1}.camera-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#101c14a3 0%,transparent 22%,transparent 65%,#101c1480 100%);pointer-events:none;z-index:2}.camera-top{position:absolute;inset:22px 23px auto;display:flex;justify-content:space-between;align-items:center;z-index:3}.camera-label{display:inline-flex;gap:8px;align-items:center;padding:9px 12px;border-radius:100px;background:#ffffff19;backdrop-filter:blur(8px);color:#fff;font-size:12px;font-weight:800}.live-dot{width:7px;height:7px;border-radius:50%;background:#d7e1d9}.live-dot.is-on{background:#70efa6;box-shadow:0 0 0 5px #70efa622}.camera-count{font-size:11px;font-weight:800;color:#ddeae2;background:#ffffff12;backdrop-filter:blur(8px);padding:9px 11px;border-radius:100px}.camera-guides{position:absolute;inset:25% 27% 24%;border:1.5px solid #e1f4e180;border-radius:25px;z-index:3;pointer-events:none;box-shadow:0 0 0 200vmax #07100d13}.camera-guides:before,.camera-guides:after{content:"";position:absolute;width:33px;height:33px;border:3px solid #e7f9d5}.camera-guides:before{top:-3px;left:-3px;border-right:0;border-bottom:0;border-top-left-radius:24px}.camera-guides:after{bottom:-3px;right:-3px;border-left:0;border-top:0;border-bottom-right-radius:24px}.camera-bottom{position:absolute;bottom:26px;left:20px;right:20px;text-align:center;z-index:3;color:#e4ece5;font-size:12px;font-weight:650;text-shadow:0 1px 8px #09150d}.camera-placeholder{position:absolute;inset:0;z-index:4;background:#1b342a;display:grid;place-items:center;text-align:center;color:#d7e7db;padding:30px}.camera-placeholder svg{width:56px;height:56px;color:#86a493;margin:0 auto 22px}.camera-placeholder strong{display:block;font-size:19px;letter-spacing:-.04em;margin:0 0 8px}.camera-placeholder p{color:#9fbaa9;font-size:13px;line-height:1.8}.loading-wheel{width:34px;height:34px;border:3px solid #aec3b440;border-top-color:#ebd56c;border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 18px}.camera-placeholder .loading-wheel~strong{font-size:18px}.error-actions{display:flex;gap:7px;justify-content:center;margin-top:18px}.error-actions button{padding:11px 15px;border-radius:9px;background:#eff2e8;color:#173b2c;font-size:12px;font-weight:900}.error-actions button+button{background:#ffffff1f;color:white;border:1px solid #ffffff2a}
+.result-card{background:white;border:1px solid #e5eae1;border-radius:25px;padding:30px;display:flex;flex-direction:column;min-height:500px}.result-kicker{display:flex;align-items:center;justify-content:space-between;color:#829488;text-transform:uppercase;font-size:11px;font-weight:900;letter-spacing:.13em}.result-kicker span:last-child{font-size:10px;letter-spacing:0;color:#93a397}.result-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:245px}.result-standby{color:#9cab9c}.result-standby svg{width:48px;height:48px;margin:0 auto 19px}.result-standby strong{font-size:21px;font-weight:850;display:block;letter-spacing:-.055em;color:var(--ink)}.result-standby p{font-size:12px;color:#91a093;margin-top:9px}.big-result{font-size:clamp(112px,13vw,185px);font-weight:900;line-height:1;letter-spacing:-.1em;color:var(--ink)}.big-result small{font-size:.75em;color:#ddbb35;font-weight:850}.result-state{font-size:12px;font-weight:750;color:#7c9385;margin-top:12px;min-height:16px}.progress{height:4px;background:#ecf1e9;border-radius:10px;overflow:hidden;margin-top:15px}.progress-fill{height:100%;width:0;background:#ddb934;border-radius:10px;transition:width .08s linear}.recognition-guide{border-top:1px solid #ebefe8;padding-top:19px}.guide-title{font-size:11px;font-weight:850;color:#96a597;letter-spacing:.06em;margin-bottom:13px}.guide-items{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.guide-item{border-radius:12px;border:1px solid #e5ece3;background:#f8faf6;padding:12px 7px 13px;text-align:center;transition:background .18s,border .18s}.guide-item strong{font-size:23px;font-weight:900;line-height:1.2;display:block}.guide-item small{font-size:10px;color:#8b9d8e;display:block;margin-top:6px;white-space:nowrap}.guide-item.active{background:#fff7d9;border-color:#ecd27b}.scan-caption{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 2px 0;font-size:11px;color:#849788;line-height:1.6}.scan-caption a{text-decoration:underline;text-underline-offset:3px}.guide-toggle{border:0;background:transparent;padding:0;color:#547c60;font-size:11px;font-weight:850;text-decoration:underline;text-underline-offset:3px}.guide-help{margin-top:12px;border-radius:13px;background:#edf3ea;padding:16px 18px;color:#607665;font-size:12px;line-height:1.8}.guide-help b{color:var(--ink)}
+@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media(max-width:950px){.site{width:min(100% - 48px,760px)}.hero{grid-template-columns:1fr;gap:20px;text-align:center;min-height:auto;padding:50px 0 60px}.eyebrow{justify-content:center}.hero-title{font-size:clamp(75px,15vw,110px)}.hero-desc{margin:24px 0 28px}.hero-foot{margin-top:22px}.hero-visual{min-height:320px;order:-1}.orb{width:min(350px,80vw)}.letter-tile{font-size:70px}.scanner-layout{grid-template-columns:1fr;gap:14px}.camera-card{min-height:460px}.result-card{min-height:300px}.result-main{min-height:200px}.result-kicker{margin-bottom:5px}.big-result{font-size:132px}.guide-items{max-width:none}.scan-bar{margin-bottom:12px}}
+@media(max-width:570px){.site{width:calc(100% - 32px)}.header{height:68px}.logo{font-size:19px}.header-side{font-size:9px}.hero{padding:25px 0 30px;min-height:calc(100svh - 140px);display:flex;flex-direction:column;justify-content:center}.hero-visual{min-height:215px;width:100%;order:0;margin:4px 0 8px}.orb{width:clamp(200px,58vw,250px)}.letter-tile{font-size:53px;border-radius:15px}.visual-tag{font-size:9px;padding:8px 10px;bottom:0;right:9%}.eyebrow{font-size:9px;margin-bottom:13px}.hero-title{font-size:74px;letter-spacing:-.09em}.hero-desc{font-size:14px;line-height:1.7;margin:17px 0 20px}.primary{height:58px;min-width:210px;font-size:16px}.hero-foot{font-size:10px;margin-top:17px}.footer{height:auto;padding:14px 0 22px;font-size:9px;gap:8px}.scan-screen{padding-top:0}.scan-bar{min-height:46px;margin:0 0 10px}.back-btn span{display:none}.scan-title{font-size:13px}.tool-btn{height:39px;font-size:11px;padding:0 10px;border-radius:11px}.tool-btn svg{width:16px;height:16px}.tool-btn.icononly{width:39px}.scanner-layout{gap:11px}.camera-card{min-height:0;height:min(48svh,445px);border-radius:20px}.camera-top{inset:14px 14px auto}.camera-label,.camera-count{font-size:10px;padding:8px 10px}.camera-guides{inset:23% 25% 22%}.camera-bottom{bottom:17px;font-size:10px}.result-card{border-radius:20px;min-height:0;padding:17px 19px 18px;display:grid;grid-template-columns:1fr;gap:5px}.result-kicker{font-size:9px;margin-bottom:0}.result-main{min-height:120px;flex-direction:column;justify-content:center}.result-standby svg{width:28px;height:28px;margin:0 auto 6px}.result-standby strong{font-size:18px}.result-standby p{font-size:10px;margin-top:5px}.big-result{font-size:96px}.result-state{font-size:11px;margin-top:0}.progress{margin-top:7px}.recognition-guide{padding-top:12px}.guide-title{font-size:10px;margin-bottom:8px}.guide-item{padding:7px}.guide-item strong{font-size:18px}.guide-item small{font-size:9px;margin-top:3px}.scan-caption{font-size:9px;flex-wrap:wrap;margin-top:10px}.guide-help{font-size:11px;padding:12px}.camera-placeholder strong{font-size:16px}.camera-placeholder p{font-size:11px}}
+@media(max-height:670px) and (max-width:570px){.camera-card{height:40svh}.result-main{min-height:92px}.big-result{font-size:70px}.guide-item{padding:5px}.hero-visual{min-height:140px}.orb{width:170px}.hero-title{font-size:60px}}
+</style>
+</head>
+<body>
+<div class="site">
+  <header class="header">
+    <a href="#home" class="logo" id="brandLink" aria-label="손짓 홈"><span class="logo-dot"></span>손짓.</a>
+    <span class="header-side">CODEMATE / 2026</span>
+  </header>
+  <main>
+    <section class="screen is-active" id="home" aria-label="시작 화면">
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">KOREAN FINGER SPELLING</div>
+          <h1 class="hero-title">손짓<span>.</span></h1>
+          <p class="hero-desc">손으로 ㄱ, ㄴ, ㄷ을 만들어 보세요.<br>카메라가 손모양을 읽어드립니다.</p>
+          <button class="primary" id="startBtn" type="button">시작하기 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <p class="hero-foot">설치 없이 웹에서 바로 · 카메라 영상 저장 없음</p>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orb"><div class="letter-group"><div class="letter-tile">ㄱ</div><div class="letter-tile">ㄴ</div><div class="letter-tile">ㄷ</div></div></div>
+          <div class="visual-tag">JUST THREE LETTERS ✳</div>
+        </div>
+      </div>
+    </section>
+    <section class="screen scan-screen" id="scanner" aria-label="실시간 손모양 인식" hidden>
+      <div class="scan-bar">
+        <button type="button" id="backBtn" class="back-btn"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="m15 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>처음으로</span></button>
+        <div class="scan-title">손짓. <span style="color:#a9b7aa;font-weight:700">/ ㄱ · ㄴ · ㄷ</span></div>
+        <div class="scan-tools">
+          <button class="tool-btn" id="flipBtn" title="앞·뒤 카메라 전환" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M19 8a7 7 0 0 0-12-2L4 9m0 0V4m0 5h5M5 16a7 7 0 0 0 12 2l3-3m0 0v5m0-5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>카메라 전환</span></button>
+          <button class="tool-btn icononly" id="retryBtn" title="카메라 다시 시작" aria-label="카메라 다시 시작" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M20 7v5h-5M4 17v-5h5M5.5 9a7 7 0 0 1 12.7-2L20 12M4 12l1.8 5A7 7 0 0 0 18.5 15" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      <div class="scanner-layout">
+        <div class="camera-card" id="cameraCard">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="landmarks" aria-hidden="true"></canvas>
+          <div class="camera-top"><div class="camera-label"><span class="live-dot" id="liveDot"></span><span id="cameraState">준비 중</span></div><span class="camera-count" id="cameraSide">전면 카메라</span></div>
+          <div class="camera-guides" aria-hidden="true"></div>
+          <p class="camera-bottom">손 전체가 화면 안에 보이도록 해주세요.</p>
+          <div class="camera-placeholder" id="placeholder" aria-live="polite">
+            <div id="loadingView"><div class="loading-wheel"></div><strong>카메라를 준비하고 있어요</strong><p>처음에는 손 인식 모델을 불러옵니다.</p></div>
+            <div id="errorView" hidden><svg aria-hidden="true" viewBox="0 0 64 64" fill="none"><rect x="12" y="12" width="40" height="40" rx="15" stroke="currentColor" stroke-width="2.6"/><path d="M32 23v12M32 41v1" stroke="currentColor" stroke-width="3.3" stroke-linecap="round"/></svg><strong>카메라를 시작하지 못했어요.</strong><p id="errorText">연결 상태를 확인해 주세요.</p><div class="error-actions"><button id="errorRetry" type="button">다시 시도</button><button id="errorHome" type="button">처음으로</button></div></div>
+          </div>
+        </div>
+        <div class="result-card" aria-live="polite" aria-atomic="true">
+          <div class="result-kicker"><span>RECOGNITION</span><span>ㄱ / ㄴ / ㄷ</span></div>
+          <div class="result-main">
+            <div class="result-standby" id="standby"><svg aria-hidden="true" viewBox="0 0 48 48" fill="none"><path d="M18 26V14a3 3 0 0 1 6 0v9-13a3 3 0 0 1 6 0v14-8a3 3 0 0 1 6 0v13-4a3 3 0 0 1 6 0v6c0 10-5 14-14 14h-6c-6 0-11-5-14-10L5 27a3 3 0 0 1 5-3l8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><strong id="standbyTitle">손을 보여주세요</strong><p id="standbySub">카메라에 손모양을 비춰 주세요.</p></div>
+            <div id="detected" hidden><div class="big-result"><span id="detectedLetter">ㄱ</span><small>!</small></div></div>
+            <p class="result-state" id="resultNote"></p>
+          </div>
+          <div class="recognition-guide">
+            <p class="guide-title">인식할 수 있는 글자</p>
+            <div class="guide-items"><div class="guide-item" data-letter="ㄱ"><strong>ㄱ</strong><small>검지 아래</small></div><div class="guide-item" data-letter="ㄴ"><strong>ㄴ</strong><small>검지 옆</small></div><div class="guide-item" data-letter="ㄷ"><strong>ㄷ</strong><small>두 손가락 옆</small></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="scan-caption"><span>한국 수어 지문자 3종을 구분하는 시범용 웹입니다. 실제 정확도는 사용 환경에 따라 다릅니다.</span><button type="button" id="helpBtn" class="guide-toggle" aria-expanded="false">손모양 안내</button></div>
+      <div id="guideHelp" class="guide-help" hidden><b>ㄱ</b> — 검지를 아래로, 엄지는 옆으로 펴주세요. &nbsp;&nbsp;<b>ㄴ</b> — 검지를 옆으로, 엄지는 위로 향하게 해주세요. &nbsp;&nbsp;<b>ㄷ</b> — 검지와 중지를 나란히 옆으로 펴주세요. 손을 카메라와 평행하게 보여주면 구분하기 쉽습니다.</div>
+    </section>
+  </main>
+  <footer class="footer"><span>CODEMATE · 청북고등학교</span><span>MADE FOR HANDS, MADE FOR LEARNING</span></footer>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const MP_VERSION='0.10.22';
+const MP_ROOT=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
+const MP_MODEL='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
+const edges=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[13,17],[17,18],[18,19],[19,20],[0,17]];
+const state={view:'home',model:null,modelPromise:null,stream:null,side:'user',running:false,starting:false,swapBusy:false,token:0,frame:0,lastProcess:0,lastVideoTime:-1,candidate:null,candidateAt:0,active:null,handLastAt:0};
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const dot=(a,b)=>a.x*b.x+a.y*b.y;
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const norm=v=>{const z=Math.hypot(v.x,v.y)||1;return{x:v.x/z,y:v.y/z}};
+const angle=(a,b,c)=>Math.acos(Math.max(-1,Math.min(1,dot(norm(sub(a,b)),norm(sub(c,b))))))*180/Math.PI;
+const fingerOpen=(lm,mcp,pip,dip,tip)=>{
+  const straight=angle(lm[mcp],lm[pip],lm[dip]);
+  const far=dist(lm[tip],lm[mcp])/Math.max(.01,dist(lm[pip],lm[mcp]));
+  return straight>145&&far>1.75;
+};
+/* The shape rules below distinguish a limited set of static Korean fingerspelling letters.
+   They are not a pretrained Korean Sign Language model. They intentionally reject
+   unfamiliar or uncertain poses rather than forcing a ㄱ/ㄴ/ㄷ result. */
+function classifyJamo(lm){
+ if(!Array.isArray(lm)||lm.length!==21)return null;
+ const i=fingerOpen(lm,5,6,7,8),m=fingerOpen(lm,9,10,11,12),r=fingerOpen(lm,13,14,15,16),p=fingerOpen(lm,17,18,19,20);
+ if(!i||r||p)return null;
+ const index=norm(sub(lm[8],lm[6]));
+ const middle=norm(sub(lm[12],lm[10]));
+ const thumbSpread=dist(lm[4],lm[5])/Math.max(.025,dist(lm[5],lm[17]));
+ if(m){
+   const parallel=dot(index,middle);
+   if(parallel>.77&&Math.abs(index.x)>.65&&Math.abs(middle.x)>.60&&Math.abs(index.y)<.70){return 'ㄷ';}
+   return null;
+ }
+ if(thumbSpread<.46)return null;
+ if(index.y>.57&&Math.abs(index.y)>Math.abs(index.x)*1.13)return 'ㄱ';
+ if(Math.abs(index.x)>.71&&Math.abs(index.x)>Math.abs(index.y)*1.10)return 'ㄴ';
+ return null;
+}
+function updateView(name){document.body.classList.toggle('scanning',name==='scanner');state.view=name;['home','scanner'].forEach(id=>{const on=id===name;$(id).hidden=!on;$(id).classList.toggle('is-active',on);});window.scrollTo(0,0);}
+function resetRecognition(message='손을 보여주세요',detail='카메라에 손모양을 비춰 주세요.'){
+  state.candidate=null;state.active=null;state.candidateAt=0;
+  $('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent=message;$('standbySub').textContent=detail;$('resultNote').textContent='';
+  document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));
+}
+function showLetter(letter){if(state.active===letter)return;state.active=letter;$('standby').hidden=true;$('detected').hidden=false;$('detectedLetter').textContent=letter;$('resultNote').textContent='인식되었습니다';
+ document.querySelectorAll('[data-letter]').forEach(e=>e.classList.toggle('active',e.dataset.letter===letter));
+}
+function showLoading(msg='카메라를 준비하고 있어요',sub='처음에는 손 인식 모델을 불러옵니다.'){$('placeholder').hidden=false;$('loadingView').hidden=false;$('errorView').hidden=true;$('loadingView').querySelector('strong').textContent=msg;$('loadingView').querySelector('p').textContent=sub;}
+function showError(error){$('placeholder').hidden=false;$('loadingView').hidden=true;$('errorView').hidden=false;$('errorText').textContent=error;$('cameraState').textContent='연결 실패';$('liveDot').classList.remove('is-on');resetRecognition('인식할 수 없습니다','카메라를 확인한 후 다시 시도해 주세요.');}
+function formatError(e){if(/HTTPS|localhost/i.test(e?.message||''))return '카메라 기능은 HTTPS 사이트에서 사용할 수 있습니다. GitHub Pages로 접속해 주세요.';
+ if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')return '카메라 사용이 차단되었습니다. 브라우저의 사이트 권한에서 허용해 주세요.';
+ if(e?.name==='NotFoundError'||e?.name==='DevicesNotFoundError')return '연결된 카메라가 없습니다. 다른 카메라를 연결하거나 권한을 확인해 주세요.';
+ if(e?.name==='NotReadableError'||e?.name==='TrackStartError')return '카메라를 다른 앱에서 사용하고 있을 수 있습니다. 다른 앱을 종료해 주세요.';
+ if(e?.name==='OverconstrainedError')return '선택한 카메라를 사용할 수 없습니다. 카메라를 전환하거나 다시 시도해 주세요.';
+ if(/fetch|network|wasm|download|load|import|connection|timeout|mime|CORS/i.test(e?.message||''))return '손 인식 모델을 불러오지 못했습니다. 인터넷 연결과 학교 네트워크를 확인해 주세요.';
+ return '카메라 또는 손 인식 모델을 시작하지 못했습니다. 다시 시도해 주세요.';}
+async function getModel(){if(state.model)return state.model;if(state.modelPromise)return state.modelPromise;
+ state.modelPromise=(async()=>{const mp=await import(`${MP_ROOT}/vision_bundle.mjs`);const files=await mp.FilesetResolver.forVisionTasks(`${MP_ROOT}/wasm`);const opt={baseOptions:{modelAssetPath:MP_MODEL,delegate:'GPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55};
+  try{return await mp.GestureRecognizer.createFromOptions(files,opt);}catch(e){return await mp.GestureRecognizer.createFromOptions(files,{...opt,baseOptions:{...opt.baseOptions,delegate:'CPU'}});}
+ })();try{state.model=await state.modelPromise;return state.model;}finally{state.modelPromise=null;}}
+function stopVideo(){state.running=false;cancelAnimationFrame(state.frame);state.frame=0;state.lastVideoTime=-1;if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null;}
+ const vid=$('video');try{vid.pause();vid.srcObject=null;}catch(_){}const c=$('landmarks');c.getContext('2d').clearRect(0,0,c.width,c.height);$('liveDot').classList.remove('is-on');}
+async function begin(side=state.side){
+ if(state.starting)return;const token=++state.token;state.starting=true;stopVideo();state.side=side;showLoading();resetRecognition('손을 보여주세요','카메라를 준비하고 있어요.');$('cameraState').textContent='준비 중';$('cameraSide').textContent=side==='user'?'전면 카메라':'후면 카메라';$('flipBtn').disabled=true;$('retryBtn').disabled=true;
+ try{
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia)throw new Error('HTTPS 또는 localhost에서 카메라를 사용할 수 있습니다.');
+  const model=await getModel();if(token!==state.token)return;
+  showLoading('카메라를 연결하고 있어요','브라우저에서 카메라 접근을 허용해 주세요.');
+  // Prefer requested facing mode, but fall back when a desktop has only one camera.
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:side},width:{ideal:960},height:{ideal:720}}});}
+  catch(e){if(e.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({audio:false,video:true});else throw e;}
+  if(token!==state.token){stream.getTracks().forEach(t=>t.stop());return;}
+  state.stream=stream;const actualSide=stream.getVideoTracks()[0]?.getSettings?.().facingMode;
+  $('cameraSide').textContent=actualSide==='environment'?'후면 카메라':actualSide==='user'?'전면 카메라':'카메라';
+  const video=$('video');video.srcObject=stream;await video.play();if(token!==state.token)return;
+  state.running=true;state.lastProcess=0;state.lastVideoTime=-1;$('placeholder').hidden=true;$('liveDot').classList.add('is-on');$('cameraState').textContent='인식 중';
+  stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{if(token!==state.token||!state.running)return;stopVideo();showError('카메라 연결이 끊어졌습니다. 다시 시도해 주세요.');}));
+  state.frame=requestAnimationFrame(loop);
+ }catch(e){if(token===state.token){stopVideo();showError(formatError(e));}}
+ finally{if(token===state.token){state.starting=false;$('flipBtn').disabled=false;$('retryBtn').disabled=false;}}
+}
+function draw(lm){const c=$('landmarks'),vid=$('video');if(c.width!==vid.videoWidth)c.width=vid.videoWidth;if(c.height!==vid.videoHeight)c.height=vid.videoHeight;
+ const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);if(!lm)return;
+ const pos=n=>({x:lm[n].x*c.width,y:lm[n].y*c.height});g.lineWidth=Math.max(2,c.width/340);g.strokeStyle='#cbf7d2';g.lineCap='round';g.lineJoin='round';
+ for(const [a,b] of edges){const A=pos(a),B=pos(b);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.stroke();}for(const pt of lm){g.beginPath();g.arc(pt.x*c.width,pt.y*c.height,Math.max(2,c.width/180),0,Math.PI*2);g.fillStyle='#fff';g.fill();}
+}
+function loop(now){if(!state.running)return;state.frame=requestAnimationFrame(loop);if(document.hidden)return;const vid=$('video');if(vid.readyState<2||now-state.lastProcess<95||vid.currentTime===state.lastVideoTime)return;
+ state.lastProcess=now;state.lastVideoTime=vid.currentTime;
+ try{const res=state.model.recognizeForVideo(vid,now);const lm=res.landmarks?.[0]||null;draw(lm);
+  if(!lm){if(now-state.handLastAt>240)resetRecognition('손을 보여주세요','화면 안에 손 전체가 보이도록 해주세요.');return;}
+  state.handLastAt=now;const letter=classifyJamo(lm);
+  if(!letter){state.candidate=null;state.active=null;$('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent='손모양을 확인하는 중';$('standbySub').textContent='ㄱ · ㄴ · ㄷ 중 하나를 보여 주세요.';$('resultNote').textContent='';document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));return;}
+  if(letter!==state.candidate){state.candidate=letter;state.candidateAt=now;state.active=null;$('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent='인식하고 있어요';$('standbySub').textContent='손모양을 잠시 유지해 주세요.';return;}
+  if(now-state.candidateAt>=330)showLetter(letter);
+ }catch(err){console.error(err);stopVideo();showError('손 인식 중 문제가 발생했습니다. 다시 시작해 주세요.');}}
+async function showScanner(){updateView('scanner');await begin();}
+function goHome(){++state.token;stopVideo();state.starting=false;state.side='user';resetRecognition();updateView('home');}
+$('startBtn').addEventListener('click',showScanner);
+$('brandLink').addEventListener('click',e=>{e.preventDefault();goHome();});$('backBtn').addEventListener('click',goHome);
+$('retryBtn').addEventListener('click',()=>begin(state.side));$('errorRetry').addEventListener('click',()=>begin(state.side));$('errorHome').addEventListener('click',goHome);
+$('flipBtn').addEventListener('click',()=>begin(state.side==='user'?'environment':'user'));
+$('helpBtn').addEventListener('click',()=>{const panel=$('guideHelp');panel.hidden=!panel.hidden;$('helpBtn').setAttribute('aria-expanded',String(!panel.hidden));});
+window.addEventListener('pagehide',()=>{++state.token;stopVideo();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){state.candidate=null;state.active=null;}});
+window.__sonjitTest={classifyJamo,getState:()=>({view:state.view,running:state.running,side:state.side,active:state.active})};
+})();
+</script>
+</body>
+</html>
