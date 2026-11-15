@@ -19,6 +19,16 @@
 @media(max-width:950px){.site{width:min(100% - 48px,760px)}.hero{grid-template-columns:1fr;gap:20px;text-align:center;min-height:auto;padding:50px 0 60px}.eyebrow{justify-content:center}.hero-title{font-size:clamp(75px,15vw,110px)}.hero-desc{margin:24px 0 28px}.hero-foot{margin-top:22px}.hero-visual{min-height:320px;order:-1}.orb{width:min(350px,80vw)}.letter-tile{font-size:70px}.scanner-layout{grid-template-columns:1fr;gap:14px}.camera-card{min-height:460px}.result-card{min-height:300px}.result-main{min-height:200px}.result-kicker{margin-bottom:5px}.big-result{font-size:132px}.guide-items{max-width:none}.scan-bar{margin-bottom:12px}}
 @media(max-width:570px){.site{width:calc(100% - 32px)}.header{height:68px}.logo{font-size:19px}.header-side{font-size:9px}.hero{padding:25px 0 30px;min-height:calc(100svh - 140px);display:flex;flex-direction:column;justify-content:center}.hero-visual{min-height:215px;width:100%;order:0;margin:4px 0 8px}.orb{width:clamp(200px,58vw,250px)}.letter-tile{font-size:53px;border-radius:15px}.visual-tag{font-size:9px;padding:8px 10px;bottom:0;right:9%}.eyebrow{font-size:9px;margin-bottom:13px}.hero-title{font-size:74px;letter-spacing:-.09em}.hero-desc{font-size:14px;line-height:1.7;margin:17px 0 20px}.primary{height:58px;min-width:210px;font-size:16px}.hero-foot{font-size:10px;margin-top:17px}.footer{height:auto;padding:14px 0 22px;font-size:9px;gap:8px}.scan-screen{padding-top:0}.scan-bar{min-height:46px;margin:0 0 10px}.back-btn span{display:none}.scan-title{font-size:13px}.tool-btn{height:39px;font-size:11px;padding:0 10px;border-radius:11px}.tool-btn svg{width:16px;height:16px}.tool-btn.icononly{width:39px}.scanner-layout{gap:11px}.camera-card{min-height:0;height:min(48svh,445px);border-radius:20px}.camera-top{inset:14px 14px auto}.camera-label,.camera-count{font-size:10px;padding:8px 10px}.camera-guides{inset:23% 25% 22%}.camera-bottom{bottom:17px;font-size:10px}.result-card{border-radius:20px;min-height:0;padding:17px 19px 18px;display:grid;grid-template-columns:1fr;gap:5px}.result-kicker{font-size:9px;margin-bottom:0}.result-main{min-height:120px;flex-direction:column;justify-content:center}.result-standby svg{width:28px;height:28px;margin:0 auto 6px}.result-standby strong{font-size:18px}.result-standby p{font-size:10px;margin-top:5px}.big-result{font-size:96px}.result-state{font-size:11px;margin-top:0}.progress{margin-top:7px}.recognition-guide{padding-top:12px}.guide-title{font-size:10px;margin-bottom:8px}.guide-item{padding:7px}.guide-item strong{font-size:18px}.guide-item small{font-size:9px;margin-top:3px}.scan-caption{font-size:9px;flex-wrap:wrap;margin-top:10px}.guide-help{font-size:11px;padding:12px}.camera-placeholder strong{font-size:16px}.camera-placeholder p{font-size:11px}}
 @media(max-height:670px) and (max-width:570px){.camera-card{height:40svh}.result-main{min-height:92px}.big-result{font-size:70px}.guide-item{padding:5px}.hero-visual{min-height:140px}.orb{width:170px}.hero-title{font-size:60px}}
+
+.calibrate-area{margin-top:14px;border-top:1px solid #dce7dc;padding-top:13px}
+.calibrate-area strong{display:block;font-size:12px;color:#345542;margin-bottom:3px}
+.calibrate-area p{font-size:11px;line-height:1.6;color:#718675}
+.calibrate-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.calibrate-buttons button{background:#fff;border:1px solid #d7e3d5;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:850;color:#214a38}
+.calibrate-buttons button:hover{background:#fbf2cf}
+.calibrate-buttons button:disabled{opacity:.45}
+#resetTrain{background:transparent;border-color:transparent;font-weight:600;color:#788f7d;padding-left:4px}
+#trainingStatus{min-height:18px;margin-top:8px;font-weight:750;color:#375a44}
 </style>
 </head>
 <body>
@@ -77,8 +87,20 @@
           </div>
         </div>
       </div>
-      <div class="scan-caption"><span>한국 수어 지문자 3종을 구분하는 시범용 웹입니다. 실제 정확도는 사용 환경에 따라 다릅니다.</span><button type="button" id="helpBtn" class="guide-toggle" aria-expanded="false">손모양 안내</button></div>
-      <div id="guideHelp" class="guide-help" hidden><b>ㄱ</b> — 검지를 아래로, 엄지는 옆으로 펴주세요. &nbsp;&nbsp;<b>ㄴ</b> — 검지를 옆으로, 엄지는 위로 향하게 해주세요. &nbsp;&nbsp;<b>ㄷ</b> — 검지와 중지를 나란히 옆으로 펴주세요. 손을 카메라와 평행하게 보여주면 구분하기 쉽습니다.</div>
+      <div class="scan-caption"><span>한국 수어 지문자 3종을 구분하는 시범용 웹입니다. 실제 정확도는 사용 환경에 따라 다릅니다.</span><button type="button" id="helpBtn" class="guide-toggle" aria-expanded="false">손모양 안내 · 보정</button></div>
+      <div id="guideHelp" class="guide-help" hidden><b>ㄱ</b> — 검지를 아래로, 엄지는 옆으로 펴주세요. &nbsp;&nbsp;<b>ㄴ</b> — 검지를 옆으로, 엄지는 위로 향하게 해주세요. &nbsp;&nbsp;<b>ㄷ</b> — 검지와 중지를 나란히 옆으로 펴주세요. 손을 카메라와 평행하게 보여주면 구분하기 쉽습니다.
+<div id="trainingPanel" class="calibrate-area">
+  <strong>인식이 잘 안 되나요?</strong>
+  <p>손모양을 카메라에 보여준 채 해당 글자를 누르면 약 1초간 특징을 저장합니다. 카메라 영상은 저장하지 않습니다.</p>
+  <div class="calibrate-buttons">
+    <button type="button" data-cal-letter="ㄱ">ㄱ 보정</button>
+    <button type="button" data-cal-letter="ㄴ">ㄴ 보정</button>
+    <button type="button" data-cal-letter="ㄷ">ㄷ 보정</button>
+    <button type="button" id="resetTrain">보정 초기화</button>
+  </div>
+  <p id="trainingStatus" role="status" aria-live="polite">보정하지 않아도 기본 인식 기능을 사용할 수 있습니다.</p>
+</div>
+</div>
     </section>
   </main>
   <footer class="footer"><span>CODEMATE · 청북고등학교</span><span>MADE FOR HANDS, MADE FOR LEARNING</span></footer>
@@ -92,7 +114,7 @@ const MP_CDNS=[`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSIO
 const MP_MODELS=['https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task','https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/hand_landmarker.task'];
 const modelErrors=[];
 const edges=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[13,17],[17,18],[18,19],[19,20],[0,17]];
-const state={view:'home',model:null,modelPromise:null,stream:null,side:'user',running:false,starting:false,swapBusy:false,token:0,frame:0,lastProcess:0,lastVideoTime:-1,candidate:null,candidateAt:0,active:null,handLastAt:0};
+const state={view:'home',model:null,modelPromise:null,stream:null,side:'user',running:false,starting:false,swapBusy:false,token:0,frame:0,lastProcess:0,lastVideoTime:-1,candidate:null,candidateAt:0,active:null,handLastAt:0,predictions:[],training:null,lastLetterAt:0};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const dot=(a,b)=>a.x*b.x+a.y*b.y;
 const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
@@ -100,40 +122,30 @@ const norm=v=>{const z=Math.hypot(v.x,v.y)||1;return{x:v.x/z,y:v.y/z}};
 const angle=(a,b,c)=>Math.acos(Math.max(-1,Math.min(1,dot(norm(sub(a,b)),norm(sub(c,b))))))*180/Math.PI;
 // Screen-space coordinates are corrected for video aspect ratio.
 // Classifies only the 3 selected static Korean manual alphabet handshapes.
-function classifyJamo(lm,aspect=1) {
-  if (!Array.isArray(lm)||lm.length!==21) return null;
-  const p=lm.map(t=>({x:t.x*aspect,y:t.y}));
-  const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-  const n=v=>{const m=Math.hypot(v.x,v.y)||1;return{x:v.x/m,y:v.y/m};};
-  const v=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
-  const angle=(a,b,c)=>{
-    const u=n(v(a,b)),w=n(v(c,b));
-    return Math.acos(Math.max(-1,Math.min(1,u.x*w.x+u.y*w.y)))*180/Math.PI;
-  };
-  const extended=(mcp,pip,dip,tip)=>{
-    const reach=d(p[tip],p[mcp])/Math.max(.002,d(p[pip],p[mcp]));
-    return reach>1.38 && angle(p[mcp],p[pip],p[dip])>125 && angle(p[pip],p[dip],p[tip])>115;
-  };
-  const ix=extended(5,6,7,8),mid=extended(9,10,11,12);
-  if(!ix || extended(13,14,15,16) || extended(17,18,19,20))return null;
-  const direction=(mcp,pip,tip)=>{
-    const long=n(v(p[tip],p[mcp])), distal=n(v(p[tip],p[pip]));
-    return n({x:long.x*.45+distal.x*.55,y:long.y*.45+distal.y*.55});
-  };
-  const i=direction(5,6,8);
-  if(mid){
-    const m=direction(9,10,12);
-    const parallel=i.x*m.x+i.y*m.y;
-    if(parallel>.7 && Math.abs(i.x)>.58 && Math.abs(m.x)>.55 && Math.abs(i.x)>Math.abs(i.y)*1.0)return 'ㄷ';
-    return null;
-  }
-  if(i.y>.52 && i.y>Math.abs(i.x)*1.05)return 'ㄱ';
-  if(Math.abs(i.x)>.57 && Math.abs(i.x)>Math.abs(i.y)*1.05)return 'ㄴ';
-  return null;
+function classifyJamo(lm,aspect=1){
+ if(!Array.isArray(lm)||lm.length!==21)return null;
+ const p=lm.map(t=>({x:t.x*aspect,y:t.y}));
+ const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+ const v=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+ const n=a=>{const q=Math.hypot(a.x,a.y)||1;return{x:a.x/q,y:a.y/q};};
+ const palm=Math.max(.025,d(p[0],p[9]));
+ const length=(base,tip)=>d(p[base],p[tip])/palm;
+ const i=length(5,8),m=length(9,12),r=length(13,16),k=length(17,20);
+ const ix=n(v(p[8],p[5])),md=n(v(p[12],p[9]));
+ const sideI=Math.abs(ix.x),sideM=Math.abs(md.x);
+ const parallel=ix.x*md.x+ix.y*md.y;
+ if(i<.20||(r>.77&&k>.77))return null;
+ // ㄷ: horizontally extended index and middle; allow modest finger curl.
+ if(i>.32&&m>.35&&sideI>.43&&sideM>.39&&parallel>.45&&r<.85&&k<.85)return 'ㄷ';
+ // ㄱ: downward index even if bent; unlike ㄴ, index may curl at the joints.
+ if(i>.22&&ix.y>.34&&ix.y>sideI*.68&&m<.82&&r<.85&&k<.85)return 'ㄱ';
+ // ㄴ: horizontally extended index with middle, ring and pinky folded.
+ if(i>.33&&sideI>.51&&sideI>Math.abs(ix.y)*.81&&m<.53&&r<.85&&k<.85)return 'ㄴ';
+ return null;
 }
-
 function updateView(name){document.body.classList.toggle('scanning',name==='scanner');state.view=name;['home','scanner'].forEach(id=>{const on=id===name;$(id).hidden=!on;$(id).classList.toggle('is-active',on);});window.scrollTo(0,0);}
 function resetRecognition(message='손을 보여주세요',detail='카메라에 손모양을 비춰 주세요.'){
+ state.predictions=[];
   state.candidate=null;state.active=null;state.candidateAt=0;
   $('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent=message;$('standbySub').textContent=detail;$('resultNote').textContent='';
   document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));
@@ -234,6 +246,95 @@ function draw(lm){const c=$('landmarks'),vid=$('video');if(c.width!==vid.videoWi
  const pos=n=>({x:lm[n].x*c.width,y:lm[n].y*c.height});g.lineWidth=Math.max(2,c.width/340);g.strokeStyle='#cbf7d2';g.lineCap='round';g.lineJoin='round';
  for(const [a,b] of edges){const A=pos(a),B=pos(b);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.stroke();}for(const pt of lm){g.beginPath();g.arc(pt.x*c.width,pt.y*c.height,Math.max(2,c.width/180),0,Math.PI*2);g.fillStyle='#fff';g.fill();}
 }
+
+const TRAIN_KEY='sonjit-personal-signs-v1';
+let learnedSigns={};
+try{
+ const raw=JSON.parse(localStorage.getItem(TRAIN_KEY)||'{}');
+ for(const letter of ['ㄱ','ㄴ','ㄷ']){
+  if(Array.isArray(raw[letter])&&raw[letter].length===42&&raw[letter].every(Number.isFinite))learnedSigns[letter]=raw[letter];
+ }
+}catch(_){}
+function handFeatures(lm,aspect){
+ if(!Array.isArray(lm)||lm.length!==21)return null;
+ const p=lm.map(v=>({x:v.x*aspect,y:v.y}));
+ const palm=Math.max(.025,Math.hypot(p[0].x-p[9].x,p[0].y-p[9].y));
+ return p.flatMap(v=>[(v.x-p[0].x)/palm,(v.y-p[0].y)/palm]);
+}
+function featureDistance(a,b,mirrored=false){
+ let total=0,weight=0;
+ for(let j=1;j<21;j++){
+  const w=([4,8,12,16,20].includes(j)?2:1);
+  const dx=a[j*2]-(mirrored?-b[j*2]:b[j*2]);
+  const dy=a[j*2+1]-b[j*2+1];
+  total+=(dx*dx+dy*dy)*w;weight+=2*w;
+ }
+ return Math.sqrt(total/weight);
+}
+function matchLearned(lm,aspect){
+ const v=handFeatures(lm,aspect);if(!v)return null;
+ let ranked=[];
+ for(const label of ['ㄱ','ㄴ','ㄷ']){
+  const ref=learnedSigns[label];if(!ref)continue;
+  const d=Math.min(featureDistance(v,ref),featureDistance(v,ref,true));
+  ranked.push({label,d});
+ }
+ ranked.sort((a,b)=>a.d-b.d);
+ if(!ranked.length)return null;
+ const top=ranked[0],next=ranked[1];
+ const threshold=ranked.length===1?.32:.47;
+ if(top.d>threshold)return null;
+ if(next&&next.d<top.d*1.16+.04&&top.d>.17)return null;
+ return top;
+}
+function predictSign(lm,aspect){
+ const basic=classifyJamo(lm,aspect),personal=matchLearned(lm,aspect);
+ if(!personal)return basic;
+ if(!basic||basic===personal.label)return personal.label;
+ if(personal.d<.28)return personal.label;
+ return basic;
+}
+function trainingMessage(msg){$('trainingStatus').textContent=msg;}
+function captureTraining(label){
+ if(!state.running){trainingMessage('카메라를 시작한 뒤 보정해 주세요.');return;}
+ state.training={label,samples:[],lastTime:0};
+ state.predictions=[];
+ resetRecognition('인식 보정 중',label+' 손모양을 그대로 유지해 주세요.');
+ trainingMessage(label+' 손모양을 유지하세요. 특징을 모으고 있습니다.');
+}
+function processTraining(lm,aspect,now){
+ const t=state.training;if(!t)return false;
+ if(!lm){trainingMessage(t.label+' 손모양을 카메라 중앙에 보여주세요.');return true;}
+ if(now-t.lastTime<95)return true;
+ t.lastTime=now;
+ const v=handFeatures(lm,aspect);if(!v)return true;
+ t.samples.push(v);
+ const remaining=Math.max(0,12-t.samples.length);
+ if(remaining>0){
+  trainingMessage(t.label+' 보정 중 · '+t.samples.length+'/12');
+  return true;
+ }
+ const avg=Array.from({length:42},(_,i)=>{
+  const values=t.samples.map(x=>x[i]).sort((a,b)=>a-b);
+  return (values[5]+values[6])/2;
+ });
+ learnedSigns[t.label]=avg;
+ try{localStorage.setItem(TRAIN_KEY,JSON.stringify(learnedSigns));}catch(_){}
+ state.training=null;
+ trainingMessage(t.label+' 보정 완료. 이제 손모양을 바꿔 인식되는지 확인해 주세요.');
+ resetRecognition('보정 완료',t.label+' 손모양을 다시 보여주세요.');
+ return true;
+}
+function resetTraining(){
+ learnedSigns={};state.training=null;state.predictions=[];
+ try{localStorage.removeItem(TRAIN_KEY);}catch(_){}
+ trainingMessage('보정 내용을 초기화했습니다. 기본 인식으로 돌아갑니다.');
+ resetRecognition();
+}
+document.querySelectorAll('[data-cal-letter]').forEach(button=>button.addEventListener('click',()=>captureTraining(button.dataset.calLetter)));
+$('resetTrain').addEventListener('click',resetTraining);
+if(Object.keys(learnedSigns).length)trainingMessage('보정된 글자: '+Object.keys(learnedSigns).join(' · ')+' (이 브라우저에만 저장됨)');
+
 function loop(now){
  if(!state.running)return;
  state.frame=requestAnimationFrame(loop);
@@ -245,35 +346,37 @@ function loop(now){
   const res=state.model.detectForVideo(vid,now);
   const lm=res.landmarks?.[0]||null;
   draw(lm);
+  const aspect=vid.videoWidth/Math.max(1,vid.videoHeight);
+  if(processTraining(lm,aspect,now))return;
   if(!lm){
    $('cameraState').textContent='손 찾는 중';
-   if(now-state.handLastAt>600)resetRecognition('손을 보여주세요','카메라에 손 전체가 보이도록 해주세요.');
+   if(now-state.handLastAt>520)resetRecognition('손을 보여주세요','화면 안에 손 전체가 보이도록 해주세요.');
    return;
   }
   state.handLastAt=now;
   $('cameraState').textContent='손 추적 중';
-  const letter=classifyJamo(lm,vid.videoWidth/Math.max(1,vid.videoHeight));
-  if(letter){
-   if(letter!==state.candidate){state.candidate=letter;state.candidateAt=now;}
-   if(now-state.candidateAt>=190){showLetter(letter);state.lastLetterAt=now;}
-   else if(!state.active){
-    $('standbyTitle').textContent='손모양을 확인하고 있어요';
-    $('standbySub').textContent='손을 잠시 유지해 주세요.';
-   }
-  }else{
-   state.candidate=null;state.candidateAt=0;
-   if(state.active&&now-(state.lastLetterAt||0)<650)return;
-   state.active=null;
-   $('standby').hidden=false;$('detected').hidden=true;
-   $('standbyTitle').textContent='손을 찾았어요';
-   $('standbySub').textContent='ㄱ은 검지 아래, ㄴ은 검지 옆, ㄷ은 두 손가락을 옆으로 펴 주세요.';
-   $('resultNote').textContent='';
-   document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));
+  const letter=predictSign(lm,aspect);
+  state.predictions.push(letter);
+  if(state.predictions.length>7)state.predictions.shift();
+  const counts={'ㄱ':0,'ㄴ':0,'ㄷ':0};
+  for(const p of state.predictions)if(p)counts[p]++;
+  const winner=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(winner[1]>=3&&winner[1]>=Math.max(...Object.values(counts).filter((v,i)=>i!==['ㄱ','ㄴ','ㄷ'].indexOf(winner[0])))+1){
+   showLetter(winner[0]);
+   state.lastLetterAt=now;
+   return;
   }
+  if(state.active&&now-state.lastLetterAt<650)return;
+  state.active=null;
+  $('standby').hidden=false;$('detected').hidden=true;
+  $('standbyTitle').textContent=letter?'인식하고 있어요':'손을 찾았어요';
+  $('standbySub').textContent=letter?'손모양을 조금 더 유지해 주세요.':'ㄱ은 검지를 아래로, ㄷ은 두 손가락을 옆으로 펴주세요.';
+  $('resultNote').textContent='';
+  document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));
  }catch(err){console.error(err);stopVideo();showError('손 인식 중 문제가 발생했습니다. 다시 시작해 주세요.');}
 }
 async function showScanner(){updateView('scanner');await begin();}
-function goHome(){++state.token;stopVideo();state.starting=false;state.side='user';resetRecognition();updateView('home');}
+function goHome(){++state.token;stopVideo();state.starting=false;state.side='user';state.training=null;resetRecognition();updateView('home');}
 $('startBtn').addEventListener('click',showScanner);
 $('brandLink').addEventListener('click',e=>{e.preventDefault();goHome();});$('backBtn').addEventListener('click',goHome);
 $('retryBtn').addEventListener('click',()=>begin(state.side));$('errorRetry').addEventListener('click',()=>begin(state.side));$('errorHome').addEventListener('click',goHome);
