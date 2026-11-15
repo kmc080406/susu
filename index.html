@@ -98,31 +98,40 @@ const dot=(a,b)=>a.x*b.x+a.y*b.y;
 const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
 const norm=v=>{const z=Math.hypot(v.x,v.y)||1;return{x:v.x/z,y:v.y/z}};
 const angle=(a,b,c)=>Math.acos(Math.max(-1,Math.min(1,dot(norm(sub(a,b)),norm(sub(c,b))))))*180/Math.PI;
-const fingerOpen=(lm,mcp,pip,dip,tip)=>{
-  const straight=angle(lm[mcp],lm[pip],lm[dip]);
-  const far=dist(lm[tip],lm[mcp])/Math.max(.01,dist(lm[pip],lm[mcp]));
-  return straight>145&&far>1.75;
-};
-/* The shape rules below distinguish a limited set of static Korean fingerspelling letters.
-   They are not a pretrained Korean Sign Language model. They intentionally reject
-   unfamiliar or uncertain poses rather than forcing a ㄱ/ㄴ/ㄷ result. */
-function classifyJamo(lm){
- if(!Array.isArray(lm)||lm.length!==21)return null;
- const i=fingerOpen(lm,5,6,7,8),m=fingerOpen(lm,9,10,11,12),r=fingerOpen(lm,13,14,15,16),p=fingerOpen(lm,17,18,19,20);
- if(!i||r||p)return null;
- const index=norm(sub(lm[8],lm[6]));
- const middle=norm(sub(lm[12],lm[10]));
- const thumbSpread=dist(lm[4],lm[5])/Math.max(.025,dist(lm[5],lm[17]));
- if(m){
-   const parallel=dot(index,middle);
-   if(parallel>.77&&Math.abs(index.x)>.65&&Math.abs(middle.x)>.60&&Math.abs(index.y)<.70){return 'ㄷ';}
-   return null;
- }
- if(thumbSpread<.46)return null;
- if(index.y>.57&&Math.abs(index.y)>Math.abs(index.x)*1.13)return 'ㄱ';
- if(Math.abs(index.x)>.71&&Math.abs(index.x)>Math.abs(index.y)*1.10)return 'ㄴ';
- return null;
+// Screen-space coordinates are corrected for video aspect ratio.
+// Classifies only the 3 selected static Korean manual alphabet handshapes.
+function classifyJamo(lm,aspect=1) {
+  if (!Array.isArray(lm)||lm.length!==21) return null;
+  const p=lm.map(t=>({x:t.x*aspect,y:t.y}));
+  const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const n=v=>{const m=Math.hypot(v.x,v.y)||1;return{x:v.x/m,y:v.y/m};};
+  const v=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+  const angle=(a,b,c)=>{
+    const u=n(v(a,b)),w=n(v(c,b));
+    return Math.acos(Math.max(-1,Math.min(1,u.x*w.x+u.y*w.y)))*180/Math.PI;
+  };
+  const extended=(mcp,pip,dip,tip)=>{
+    const reach=d(p[tip],p[mcp])/Math.max(.002,d(p[pip],p[mcp]));
+    return reach>1.38 && angle(p[mcp],p[pip],p[dip])>125 && angle(p[pip],p[dip],p[tip])>115;
+  };
+  const ix=extended(5,6,7,8),mid=extended(9,10,11,12);
+  if(!ix || extended(13,14,15,16) || extended(17,18,19,20))return null;
+  const direction=(mcp,pip,tip)=>{
+    const long=n(v(p[tip],p[mcp])), distal=n(v(p[tip],p[pip]));
+    return n({x:long.x*.45+distal.x*.55,y:long.y*.45+distal.y*.55});
+  };
+  const i=direction(5,6,8);
+  if(mid){
+    const m=direction(9,10,12);
+    const parallel=i.x*m.x+i.y*m.y;
+    if(parallel>.7 && Math.abs(i.x)>.58 && Math.abs(m.x)>.55 && Math.abs(i.x)>Math.abs(i.y)*1.0)return 'ㄷ';
+    return null;
+  }
+  if(i.y>.52 && i.y>Math.abs(i.x)*1.05)return 'ㄱ';
+  if(Math.abs(i.x)>.57 && Math.abs(i.x)>Math.abs(i.y)*1.05)return 'ㄴ';
+  return null;
 }
+
 function updateView(name){document.body.classList.toggle('scanning',name==='scanner');state.view=name;['home','scanner'].forEach(id=>{const on=id===name;$(id).hidden=!on;$(id).classList.toggle('is-active',on);});window.scrollTo(0,0);}
 function resetRecognition(message='손을 보여주세요',detail='카메라에 손모양을 비춰 주세요.'){
   state.candidate=null;state.active=null;state.candidateAt=0;
@@ -225,15 +234,44 @@ function draw(lm){const c=$('landmarks'),vid=$('video');if(c.width!==vid.videoWi
  const pos=n=>({x:lm[n].x*c.width,y:lm[n].y*c.height});g.lineWidth=Math.max(2,c.width/340);g.strokeStyle='#cbf7d2';g.lineCap='round';g.lineJoin='round';
  for(const [a,b] of edges){const A=pos(a),B=pos(b);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.stroke();}for(const pt of lm){g.beginPath();g.arc(pt.x*c.width,pt.y*c.height,Math.max(2,c.width/180),0,Math.PI*2);g.fillStyle='#fff';g.fill();}
 }
-function loop(now){if(!state.running)return;state.frame=requestAnimationFrame(loop);if(document.hidden)return;const vid=$('video');if(vid.readyState<2||now-state.lastProcess<95||vid.currentTime===state.lastVideoTime)return;
+function loop(now){
+ if(!state.running)return;
+ state.frame=requestAnimationFrame(loop);
+ if(document.hidden)return;
+ const vid=$('video');
+ if(vid.readyState<2||now-state.lastProcess<95||vid.currentTime===state.lastVideoTime)return;
  state.lastProcess=now;state.lastVideoTime=vid.currentTime;
- try{const res=state.model.detectForVideo(vid,now);const lm=res.landmarks?.[0]||null;draw(lm);
-  if(!lm){if(now-state.handLastAt>240)resetRecognition('손을 보여주세요','화면 안에 손 전체가 보이도록 해주세요.');return;}
-  state.handLastAt=now;const letter=classifyJamo(lm);
-  if(!letter){state.candidate=null;state.active=null;$('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent='손모양을 확인하는 중';$('standbySub').textContent='ㄱ · ㄴ · ㄷ 중 하나를 보여 주세요.';$('resultNote').textContent='';document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));return;}
-  if(letter!==state.candidate){state.candidate=letter;state.candidateAt=now;state.active=null;$('standby').hidden=false;$('detected').hidden=true;$('standbyTitle').textContent='인식하고 있어요';$('standbySub').textContent='손모양을 잠시 유지해 주세요.';return;}
-  if(now-state.candidateAt>=330)showLetter(letter);
- }catch(err){console.error(err);stopVideo();showError('손 인식 중 문제가 발생했습니다. 다시 시작해 주세요.');}}
+ try{
+  const res=state.model.detectForVideo(vid,now);
+  const lm=res.landmarks?.[0]||null;
+  draw(lm);
+  if(!lm){
+   $('cameraState').textContent='손 찾는 중';
+   if(now-state.handLastAt>600)resetRecognition('손을 보여주세요','카메라에 손 전체가 보이도록 해주세요.');
+   return;
+  }
+  state.handLastAt=now;
+  $('cameraState').textContent='손 추적 중';
+  const letter=classifyJamo(lm,vid.videoWidth/Math.max(1,vid.videoHeight));
+  if(letter){
+   if(letter!==state.candidate){state.candidate=letter;state.candidateAt=now;}
+   if(now-state.candidateAt>=190){showLetter(letter);state.lastLetterAt=now;}
+   else if(!state.active){
+    $('standbyTitle').textContent='손모양을 확인하고 있어요';
+    $('standbySub').textContent='손을 잠시 유지해 주세요.';
+   }
+  }else{
+   state.candidate=null;state.candidateAt=0;
+   if(state.active&&now-(state.lastLetterAt||0)<650)return;
+   state.active=null;
+   $('standby').hidden=false;$('detected').hidden=true;
+   $('standbyTitle').textContent='손을 찾았어요';
+   $('standbySub').textContent='ㄱ은 검지 아래, ㄴ은 검지 옆, ㄷ은 두 손가락을 옆으로 펴 주세요.';
+   $('resultNote').textContent='';
+   document.querySelectorAll('[data-letter]').forEach(e=>e.classList.remove('active'));
+  }
+ }catch(err){console.error(err);stopVideo();showError('손 인식 중 문제가 발생했습니다. 다시 시작해 주세요.');}
+}
 async function showScanner(){updateView('scanner');await begin();}
 function goHome(){++state.token;stopVideo();state.starting=false;state.side='user';resetRecognition();updateView('home');}
 $('startBtn').addEventListener('click',showScanner);
